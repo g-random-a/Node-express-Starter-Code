@@ -1,0 +1,33 @@
+stages:
+  - build
+  - test
+  - deploy
+
+# Build Stage
+build:
+  stage: build
+  image: node:14
+  script:
+    - npm install
+  artifacts:
+    paths:
+      - node_modules/
+  
+# Test Stage
+test:
+  stage: test
+  image: node:14
+  script:
+    - npm test
+  dependencies:
+    - build
+
+# Deploy Stage
+deploy:
+  stage: deploy
+  image: node:14
+  script:
+    - pm2 restart question-response || pm2 start src/app.ts --name "question-response"
+  environment:
+    name: production
+    url: http://54.160.180.69
