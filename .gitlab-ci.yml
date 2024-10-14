@@ -29,12 +29,12 @@ deploy:
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
-    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << EOF
-      cd /response-question/question-response-service  
-      git pull origin development
-      npm install
-      pm2 restart all  
-
-EOF:
+    - |
+      ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << 'EOF'
+        cd /response-question/question-response-service  
+        git pull origin development
+        npm install
+        pm2 restart all
+      EOF
   only:
     - development
