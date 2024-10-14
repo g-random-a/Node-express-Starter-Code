@@ -8,7 +8,6 @@ variables:
   SSH_USER: "yared"
   SERVER_IP: "54.160.180.69"
 
-# Step 1: Install dependencies
 install:
   stage: install
   script:
@@ -16,15 +15,13 @@ install:
   only:
     - development
 
-# Step 2: Run Tests
 test:
   stage: test
   script:
-    - npm test  # Adjust if you have a specific test command
+    - npm test  
   only:
     - development
 
-# Step 3: Deploy to EC2
 deploy:
   stage: deploy
   script:
@@ -37,6 +34,7 @@ deploy:
       git pull origin development
       npm install
       pm2 restart all  
-EOF
+
+EOF:
   only:
     - development
