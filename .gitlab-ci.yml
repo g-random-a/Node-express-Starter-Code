@@ -1,33 +1,42 @@
 stages:
-  - build
+  - install
   - test
   - deploy
 
-# Build Stage
-build:
-  stage: build
-  image: node:14
+variables:
+  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
+  SSH_USER: "yared"
+  SERVER_IP: "54.160.180.69"
+
+# Step 1: Install dependencies
+install:
+  stage: install
   script:
     - npm install
-  artifacts:
-    paths:
-      - node_modules/
-  
-# Test Stage
+  only:
+    - main
+
+# Step 2: Run Tests
 test:
   stage: test
-  image: node:14
   script:
-    - npm test
-  dependencies:
-    - build
+    - npm test  # Adjust if you have a specific test command
+  only:
+    - main
 
-# Deploy Stage
+# Step 3: Deploy to EC2
 deploy:
   stage: deploy
-  image: node:14
   script:
-    - pm2 restart question-response || pm2 start src/app.ts --name "question-response"
-  environment:
-    name: production
-    url: http://54.160.180.69
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << 'EOF'
+        cd /response-question/question-response-service  # Replace with the actual path to your app on the server
+        git pull origin development
+        npm install
+        pm2 restart all  # Or replace with your app’s start command
+      EOF
+  only:
+    - main
