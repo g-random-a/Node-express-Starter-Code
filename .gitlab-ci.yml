@@ -14,7 +14,7 @@ install:
   script:
     - npm install
   only:
-    - main
+    - development
 
 # Step 2: Run Tests
 test:
@@ -22,7 +22,7 @@ test:
   script:
     - npm test  # Adjust if you have a specific test command
   only:
-    - main
+    - development
 
 # Step 3: Deploy to EC2
 deploy:
@@ -32,11 +32,11 @@ deploy:
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
-    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << 'EOF'
-        cd /response-question/question-response-service  # Replace with the actual path to your app on the server
-        git pull origin development
-        npm install
-        pm2 restart all  # Or replace with your app’s start command
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << EOF
+      cd /response-question/question-response-service  # Replace with the actual path to your app on the server
+      git pull origin development
+      npm install
+      pm2 restart all  # Or replace with your app’s start command
       EOF
   only:
-    - main
+    - development
