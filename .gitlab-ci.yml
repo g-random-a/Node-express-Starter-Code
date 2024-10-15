@@ -4,7 +4,7 @@ stages:
   - deploy
 
 variables:
-  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
+  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY  
   SSH_USER: "yared"
   SERVER_IP: "54.160.180.69"
 
@@ -38,3 +38,8 @@ deploy:
       EOF
   only:
     - development
+
+  tag:
+   - kifiya_docker_runner01
+
+

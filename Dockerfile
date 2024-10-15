@@ -1,20 +1,18 @@
-# Use the official Node.js image as a base image
+# Use the official Node.js image
 FROM node:20
-
-# Set the working directory in the container
+# Set working directory
 WORKDIR /usr/src/app
-
 # Copy package.json and package-lock.json
 COPY package*.json ./
-
 # Install dependencies
 RUN npm install
-
-# Copy the rest of the application code
+# Install TypeScript globally
+RUN npm install -g typescript
+# Copy the rest of the application files
 COPY . .
-
-# Expose the port your app runs on
+# Transpile TypeScript to JavaScript
+RUN tsc
+# Expose the application port (adjust if different)
 EXPOSE 3000
-
-# Command to run your application
-CMD ["node", "server.js"]
+# Start the app using the transpiled JavaScript
+CMD ["npm", "start"]
