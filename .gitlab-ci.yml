@@ -1,4 +1,5 @@
 stages:
+  - check
   - install
   - test
   - deploy
@@ -8,21 +9,34 @@ variables:
   SSH_USER: "yared"
   SERVER_IP: "54.160.180.69"
 
+check_node:
+  stage: check
+  script:
+    - echo "Checking Node.js version..."
+    - node -v || echo "Node.js is not installed"
+    - echo "Checking npm version..."
+    - npm -v || echo "npm is not installed"
+  only:
+    - development
+  tags:
+    - kft_build_server01
+
 install:
   stage: install
   script:
     - npm install
   only:
     - development
-  tags :
+  tags:
     - kft_build_server01
+
 test:
   stage: test
   script:
     - npm test  
   only:
     - development
-  tags :
+  tags:
     - kft_build_server01
 
 deploy:
@@ -41,8 +55,5 @@ deploy:
       EOF
   only:
     - development
-
   tags:
-   - kifiya_docker_runner01
-
-
+    - kifiya_docker_runner01
