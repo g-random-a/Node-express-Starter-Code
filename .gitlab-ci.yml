@@ -15,7 +15,7 @@ install:
   only:
     - development
   tags :
-    - kft_build_server01
+    - kifiya_docker_runner01
 test:
   stage: test
   script:
@@ -23,7 +23,7 @@ test:
   only:
     - development
   tags :
-    - kft_build_server01
+    - kifiya_docker_runner01
 
 deploy:
   stage: deploy
@@ -43,6 +43,6 @@ deploy:
     - development
 
   tags:
-   - kft_build_server01
+   - kifiya_docker_runner01
 
 
