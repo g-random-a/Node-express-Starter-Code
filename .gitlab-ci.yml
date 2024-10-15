@@ -39,7 +39,7 @@ deploy:
   only:
     - development
 
-  tag:
+  tags:
    - kifiya_docker_runner01
 
 
