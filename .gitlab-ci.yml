@@ -14,13 +14,16 @@ install:
     - npm install
   only:
     - development
-
+  tags :
+    - kft_build_server01
 test:
   stage: test
   script:
     - npm test  
   only:
     - development
+  tags :
+    - kft_build_server01
 
 deploy:
   stage: deploy
