@@ -1,0 +1,251 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Response Collection API",
+    "version": "1.0.0",
+    "description": "API for managing Question responses",
+    "contact": {
+      "name": "Yared Wubie",
+      "email": "ywubie@qena.dev"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/responses": {
+      "post": {
+        "summary": "Create a new response",
+        "description": "Create a response to a question",
+        "tags": ["Responses"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResponse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response created successfully"
+          },
+          "400": {
+            "description": "Invalid input data"
+          }
+        }
+      }
+    },
+    "/responses/{taskId}/{questionId}": {
+      "put": {
+        "summary": "Edit an existing answer",
+        "description": "Edit a response for a question based on taskId and questionId",
+        "tags": ["Responses"],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditAnswer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Answer updated successfully"
+          },
+          "404": {
+            "description": "Response not found"
+          },
+          "400": {
+            "description": "Unsupported question type"
+          }
+        }
+      },
+      "get": {
+        "summary": "Fetch a response by taskId and questionId",
+        "description": "Retrieve a response based on the taskId and questionId",
+        "tags": ["Responses"],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Response not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a response by taskId and questionId",
+        "description": "Delete a specific response by taskId and questionId",
+        "tags": ["Responses"],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response deleted successfully"
+          },
+          "404": {
+            "description": "Response not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateResponse": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string"
+          },
+          "questionId": {
+            "type": "string"
+          },
+          "questionTitle": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "answerType": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "timeLimit": {
+            "type": "number"
+          },
+          "Answer": {
+            "type": "object",
+            "properties": {
+              "form": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "title": { "type": "string" },
+                    "input": { "type": "string" }
+                  }
+                }
+              },
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "title": { "type": "string" },
+                    "questionId": { "type": "string" },
+                    "selected": { "type": "boolean" }
+                  }
+                }
+              },
+              "files": {
+                "type": "array",
+                "items": { "type": "object", "properties": { "id": { "type": "string" } } }
+              },
+              "textInput": { "type": "string" },
+              "timeOnScreen": { "type": "number" },
+              "hasRule": { "type": "boolean" },
+              "responded": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "EditAnswer": {
+        "type": "object",
+        "properties": {
+          "Answer": {
+            "$ref": "#/components/schemas/CreateResponse/properties/Answer"
+          },
+          "questionType": {
+            "type": "string"
+          }
+        }
+      },
+      "Response": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "taskId": { "type": "string" },
+          "questionId": { "type": "string" },
+          "questionTitle": { "type": "string" },
+          "description": { "type": "string" },
+          "answerType": { "type": "string" },
+          "required": { "type": "boolean" },
+          "timeLimit": { "type": "number" },
+          "Answer": { "$ref": "#/components/schemas/CreateResponse/properties/Answer" }
+        }
+      }
+    }
+  }
+}

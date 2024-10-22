@@ -1,23 +1,22 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import { Request, Response } from 'express';
-import connectDB from './config/database';
-import routes from './routes';
+import express from "express";
+import cors from "cors"; // Import cors
+import responseRoutes from "./routes/responseRoutes";
 
-dotenv.config();
+import { connectDB } from "./utils/db";
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from './swagger.json';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-app.use('/', routes);
+connectDB();
 
-const startServer = async () => {
-    await connectDB();
+// Use CORS middleware
+app.use(cors()); // Enable All CORS Requests
 
-    app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-    });
-};
+app.use(express.json());
+// setupSwagger(app); // Setup Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-startServer().catch(error => {
-    console.error('Server startup error:', error);
-});
+app.use("/api", responseRoutes);
+
+
+export default app;
