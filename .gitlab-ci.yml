@@ -1,59 +1,37 @@
 stages:
-  - check
-  - install
-  - test
+  - build
   - deploy
+  - cleanup
 
-variables:
-  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY  
-  SSH_USER: "yared"
-  SERVER_IP: "54.160.180.69"
-
-check_node:
-  stage: check
-  script:
-    - echo "Checking Node.js version..."
-    - node -v || echo "Node.js is not installed"
-    - echo "Checking npm version..."
-    - npm -v || echo "npm is not installed"
-  only:
-    - development
+development-build:
+  stage: build
   tags:
     - kft_build_server01
-
-install:
-  stage: install
-  script:
-    - npm install
   only:
     - development
-  tags:
-    - kft_build_server01
-
-test:
-  stage: test
   script:
-    - npm test  
-  only:
-    - development
-  tags:
-    - kft_build_server01
+    - >
+      docker build
+      -t "$DOCKER_REGISTRY_URL"/platform-x/backend/"${CI_PROJECT_NAME}"_"${CI_COMMIT_BRANCH}"_img .
+    - echo "$DOCKER_REGISTRY_PASS" | docker login "$DOCKER_REGISTRY_URL" --username $DOCKER_REGISTRY_USER --password-stdin
+    - docker push "$DOCKER_REGISTRY_URL"/platform-x/backend/"${CI_PROJECT_NAME}"_"${CI_COMMIT_BRANCH}"_img
 
 deploy:
   stage: deploy
-  script:
-    - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
-    - |
-      ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << 'EOF'
-        cd /response-question/question-response-service  
-        git pull origin development
-        npm install
-        pm2 restart all
-      EOF
   only:
     - development
   tags:
-    - kifiya_docker_runner01
+    - kft_build_server01
+  script:
+    - ansible-playbook ~/../kifiya/workspace/ansible-playbooks/Platform-X/Backend/"${CI_PROJECT_NAME}"_"${CI_COMMIT_BRANCH}".yml
+  retry: 2
+
+cleanup:
+  stage: cleanup
+  only:
+    - development
+  tags:
+    - kft_build_server01
+  script:
+    - docker image prune -af
+  retry: 2
