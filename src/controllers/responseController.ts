@@ -25,7 +25,7 @@ const sendErrorResponse = (res: Response, statusCode: number, message: string) =
 // Create a new response
 export const createResponse = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { taskId, questionId, questionTitle, questionType, description, answerType, required, timeLimit, Answer } = req.body;
+    const { taskId,userId, questionId, questionTitle, questionType, description, answerType, required, timeLimit, Answer } = req.body;
     console.log(req.body);
 
     // Parse the Answer string if it's provided
@@ -94,6 +94,7 @@ export const createResponse = async (req: Request, res: Response): Promise<void>
       questionType,
       description,
       answerType,
+      userId,
       required,
       timeLimit,
       Answer: answerPayload,

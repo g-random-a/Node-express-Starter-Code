@@ -7,6 +7,8 @@ const responseSchema = new Schema({
   questionType: { type: String, required: true },  // new field to handle type
   description: { type: String, required: true },
   answerType: { type: String, required: true },
+  userId: { type: String, },
+
   required: { type: Boolean, },
   timeLimit: { type: Number },
   Answer: {

@@ -171,6 +171,9 @@
           "questionTitle": {
             "type": "string"
           },
+          "userId": {
+            "type": "string"
+          },
           "description": {
             "type": "string"
           },
@@ -242,6 +245,9 @@
           "description": { "type": "string" },
           "answerType": { "type": "string" },
           "required": { "type": "boolean" },
+          "userId": {
+            "type": "string"
+          },
           "timeLimit": { "type": "number" },
           "Answer": { "$ref": "#/components/schemas/CreateResponse/properties/Answer" }
         }
