@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 
 export const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_DB_URI || "mongodb://localhost:27017/datacollection", {
+
+
+    await mongoose.connect(process.env.MONGO_DB_URI || "mongodb+srv://ywubie:VjedQVvZKoa3ELoy@cluster0.yb9ka.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
     //   useNewUrlParser: true,
     //   useUnifiedTopology: true,
     });

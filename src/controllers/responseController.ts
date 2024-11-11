@@ -5,10 +5,10 @@ import { upload } from "../middleware/multerConfig"; // Assuming Multer config i
 
 // Define validation schema using Joi
 const schema = Joi.object({
-  taskId: Joi.string().required().messages({
-    "string.base": `"taskId" should be a type of 'text'`,
-    "string.empty": `"taskId" cannot be an empty field`,
-    "any.required": `"taskId" is a required field`,
+  userId: Joi.string().required().messages({
+    "string.base": `"userId" should be a type of 'text'`,
+    "string.empty": `"userId" cannot be an empty field`,
+    "any.required": `"userId" is a required field`,
   }),
   questionId: Joi.string().required().messages({
     "string.base": `"questionId" should be a type of 'text'`,
@@ -17,212 +17,244 @@ const schema = Joi.object({
   }),
 });
 
+
+const singleResponseSchema = Joi.object({
+  userId: Joi.string().required().messages({
+    "string.base": `"userId" should be a type of 'text'`,
+    "string.empty": `"userId" cannot be an empty field`,
+    "any.required": `"userId" is a required field`,
+  }),
+  questionId: Joi.string().required().messages({
+    "string.base": `"questionId" should be a type of 'text'`,
+    "string.empty": `"questionId" cannot be an empty field`,
+    "any.required": `"questionId" is a required field`,
+  }),
+  questionType: Joi.string().required().messages({
+    "string.base": `"questionType" should be a type of 'text'`,
+    "string.empty": `"questionType" cannot be an empty field`,
+    "any.required": `"questionType" is a required field`,
+  }),
+  answers: Joi.array().required().messages({
+    "array.base": `"answers" should be an array`,
+    "any.required": `"answers" is a required field`,
+  }),
+});
+
 // Helper function for sending error responses
 const sendErrorResponse = (res: Response, statusCode: number, message: string) => {
   res.status(statusCode).json({ message });
 };
 
+
+
+// Validation schema for bulk responses
+const bulkResponseSchema = Joi.array().items(singleResponseSchema);
+
+export const createBulkResponses = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const responses = req.body;
+
+    // Validate bulk payload
+    const { error } = bulkResponseSchema.validate(responses);
+    if (error) {
+      return sendErrorResponse(res, 400, error.details[0].message);
+    }
+
+    // Process each response item
+    const formattedResponses = responses.map((response: any) => {
+      const { userId, questionId, questionType, answers } = response;
+
+      let formattedAnswers;
+
+      switch (questionType) {
+        case "TEXT":
+        case "EMAIL":
+        case "NUMBER":
+        case "DATE":
+        case "TIME":
+        case "COLORPICKER":
+        case "SLIDER":
+        case "LOCATION":
+        case "RATING":
+          formattedAnswers = answers.map((answer: any) => ({
+            id: answer.id,
+            value: answer.value,
+          }));
+          break;
+
+        case "MULTIPLE_CHOICE":
+        case "CHECKBOX":
+        case "DROPDOWN":
+        case "RADIOBUTTON":
+          formattedAnswers = answers.map((answer: any) => ({
+            id: answer.id,
+            selected: answer.selected,
+            title: answer.title,
+
+          }));
+          break;
+
+        case "RANGE":
+          formattedAnswers = answers.map((answer: any) => ({
+            id: answer.id,
+            startValue: answer.startValue,
+            endValue: answer.endValue,
+          }));
+          break;
+
+        case "FILE":
+        case "Media":
+          if (!req.files || !(req.files as Express.Multer.File[]).length) {
+            throw new Error("No files uploaded");
+          }
+          const files = req.files as Express.Multer.File[];
+          formattedAnswers = answers.map((answer: any, index: number) => ({
+            id: answer.id,
+            file: files.map((file) => ({
+              filename: file.filename,
+              url: `/uploads/${file.filename}`,
+              type: file.mimetype,
+            })),
+          }));
+          break;
+
+        default:
+          throw new Error("Unsupported question type");
+      }
+
+      return {
+        userId,
+        questionId,
+        questionType,
+        answers: formattedAnswers,
+      };
+    });
+
+    // Save all responses to the database
+    const savedResponses = await ResponseModel.insertMany(formattedResponses);
+    res.status(201).json({ message: "Muliple responses saved successfully", savedResponses });
+  } catch (error: any) {
+    console.error(error);
+    sendErrorResponse(res, 500, "Internal server error");
+  }
+};
+
 // Create a new response
 export const createResponse = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { taskId,userId, questionId, questionTitle, questionType, description, answerType, required, timeLimit, Answer } = req.body;
-    console.log(req.body);
+    const { userId, questionId, answers, questionType, taskId } = req.body;
 
-    // Parse the Answer string if it's provided
-    let parsedAnswer;
-    try {
-      parsedAnswer = JSON.parse(Answer);
-    } catch (error) {
-      return sendErrorResponse(res, 400, "Invalid Answer format");
+    // Validate payload
+    const { error } = schema.validate({ userId, questionId });
+    if (error) return sendErrorResponse(res, 400, error.details[0].message);
+
+    if (!Array.isArray(answers) || answers.length === 0) {
+      return sendErrorResponse(res, 400, "Invalid or missing 'answers' array");
     }
 
-    // Handle response based on question type
-    let answerPayload;
+    // Parse answers based on questionType and map to schema structure
+    const Answer: any = {};
     switch (questionType) {
-      case "text":
-        answerPayload = {
-          textInput: parsedAnswer.textInput,
-          timeOnScreen: parsedAnswer.timeOnScreen,
-          responded: true,
+      case "TEXT":
+      case "EMAIL":
+      case "NUMBER":
+      case "DATE":
+      case "TIME":
+      case "COLORPICKER":
+      case "SLIDER":
+      case "LOCATION":
+      case "RATING":
+        Answer.Text = answers.map((answer: any) => ({
+          id: answer.id,
+          value: answer.value,
+        }));
+        break;
+
+      case "MULTIPLE_CHOICE":
+      case "CHECKBOX":
+      case "DROPDOWN":
+      case "RADIOBUTTON":
+        Answer.choices = answers.map((answer: any) => ({
+          id: answer.id,
+          selected: answer.selected,
+          title:answer.title,
+          questionId:answer.questionId
+
+        }));
+        break;
+
+      case "RANGE":
+        Answer.rating = {
+          value: answers[0]?.value,
+          max: answers[0]?.max,
         };
         break;
 
-      case "multipleChoice":
-        answerPayload = {
-          choices: parsedAnswer.choices.map((choice: any) => ({
-            id: choice.id,
-            title: choice.title,
-            questionId: choice.questionId,
-            selected: choice.selected,
-          })),
-          responded: true,
-        };
-        break;
-
-      case "fileUpload":
+      case "FILE":
+      case "Media":
+        if (!req.files || !(req.files as Express.Multer.File[]).length) {
+          return sendErrorResponse(res, 400, "No files uploaded");
+        }
         const files = req.files as Express.Multer.File[];
-        answerPayload = {
-          files: files.map((file) => ({
-            id: file.filename,
-            url: `/uploads/${file.filename}`,
-            type: file.mimetype,
-            name: file.originalname,
-            size: file.size.toString(),
-          })),
-          responded: true,
-        };
-        break;
-
-      case "rating":
-        answerPayload = {
-          rating: {
-            value: parsedAnswer.rating.value,
-            max: parsedAnswer.rating.max,
-          },
-          responded: true,
-        };
+        Answer.files = files.map((file) => ({
+          id: answers[0]?.id, // Ensure `answers` include `id`
+          url: `/uploads/${file.filename}`,
+          type: file.mimetype,
+          name: file.originalname,
+          size: file.size.toString(),
+        }));
         break;
 
       default:
         return sendErrorResponse(res, 400, "Unsupported question type");
     }
 
+    // Save response
     const response = new ResponseModel({
       taskId,
       questionId,
-      questionTitle,
-      questionType,
-      description,
-      answerType,
       userId,
-      required,
-      timeLimit,
-      Answer: answerPayload,
+      Answer,
     });
 
     await response.save();
     res.status(201).json(response);
   } catch (error: any) {
-    console.error(error); // Log the error for debugging
+    console.error(error);
     sendErrorResponse(res, 500, "Internal server error");
   }
 };
 
-// Edit an answer
-export const editAnswer = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { taskId, questionId } = req.params;
-    const { Answer, questionType } = req.body;
-    console.log(req.body)
 
-    const response = await ResponseModel.findOne({ taskId, questionId });
-    if (!response) {
-      return sendErrorResponse(res, 404, "Response not found");
-    }
 
-    const answer = response.Answer as NonNullable<typeof response.Answer>;
-
-    switch (questionType) {
-      case "text":
-        answer.textInput = Answer.textInput;
-        response.timeOnScreen = Answer.timeOnScreen;
-        response.responded = true;
-        break;
-
-      case "multipleChoice":
-        answer.choices = Answer.choices.map((choice: any) => ({
-          id: choice.id,
-          title: choice.title,
-          questionId: choice.questionId,
-          selected: choice.selected,
-        }));
-        response.responded = true;
-        break;
-
-      case "fileUpload":
-        if (req.files && (req.files as Express.Multer.File[]).length > 0) {
-          const files = req.files as Express.Multer.File[];
-          // answer.files = []; // Reset files array
-
-          files.forEach((file) => {
-            answer.files.push({
-              id: file.filename,
-              url: `/uploads/${file.filename}`,
-              type: file.mimetype,
-              name: file.originalname,
-              size: file.size.toString(),
-            });
-          });
-        }
-        response.responded = true;
-        break;
-
-      default:
-        return sendErrorResponse(res, 400, "Unsupported question type");
-    }
-
-    await response.save();
-    res.status(200).json({ message: "Answer updated successfully", response });
-  } catch (error: any) {
-    console.error(error); // Log the error for debugging
-    if (error.name === "CastError") {
-      sendErrorResponse(res, 404, "Response not found");
-    } else {
-      sendErrorResponse(res, 500, "Internal server error");
-    }
-  }
-};
-
-// Get all responses
+// Fetch responses
 export const getResponses = async (req: Request, res: Response): Promise<void> => {
   try {
     const responses = await ResponseModel.find();
-    res.json(responses);
+    res.status(200).json(responses);
   } catch (error: any) {
-    console.error(error); // Log the error for debugging
+    console.error(error);
     sendErrorResponse(res, 500, "Internal server error");
   }
 };
-
-// Delete response by taskId and questionId
-export const deleteResponseByTaskAndQuestion = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { taskId, questionId } = req.params;
-    const response = await ResponseModel.findOneAndDelete({ taskId, questionId });
-
-    if (!response) {
-      return sendErrorResponse(res, 404, "Response not found");
-    }
-
-    res.status(200).json({ message: "Response deleted successfully" });
-  } catch (error: any) {
-    console.error(error); // Log the error for debugging
-    sendErrorResponse(res, 500, "Internal server error");
-  }
-};
-
-// Fetch response by taskId and questionId
-export const getResponseByTaskAndQuestion = async (req: Request, res: Response): Promise<void> => {
+export const getResponsesByUserAndTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const { error } = schema.validate(req.params);
     if (error) {
       return sendErrorResponse(res, 400, error.details[0].message);
     }
 
-    const { taskId, questionId } = req.params;
-    const response = await ResponseModel.findOne({ taskId, questionId });
+    const { userId, taskId } = req.body;
+    const responses = await ResponseModel.find({ userId, taskId });
 
-    if (!response) {
-      return sendErrorResponse(res, 404, "Record not found");
+    if (!responses.length) {
+      return sendErrorResponse(res, 404, "No responses found for the specified userId and taskId");
     }
 
-    res.status(200).json(response);
+    res.status(200).json(responses);
   } catch (error: any) {
-    console.error(error); // Log the error for debugging
-    if (error.name === "CastError") {
-      sendErrorResponse(res, 404, "Record not found");
-    } else {
-      sendErrorResponse(res, 500, "Internal server error");
-    }
+    console.error(error);
+    sendErrorResponse(res, 500, "Internal server error");
   }
 };
+// Edit response

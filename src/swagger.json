@@ -32,8 +32,15 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Response created successfully"
+          "201": {
+            "description": "Response created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid input data"
@@ -69,7 +76,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EditAnswer"
+                "$ref": "#/components/schemas/EditResponse"
               }
             }
           }
@@ -155,6 +162,31 @@
           }
         }
       }
+    },
+    "/responses/bulk": {
+      "post": {
+        "summary": "Create bulk responses",
+        "description": "Create multiple responses for questions in bulk",
+        "tags": ["Responses"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBulkResponses"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bulk responses created successfully"
+          },
+          "400": {
+            "description": "Invalid input data"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -174,84 +206,271 @@
           "userId": {
             "type": "string"
           },
-          "description": {
-            "type": "string"
-          },
-          "answerType": {
-            "type": "string"
-          },
-          "required": {
-            "type": "boolean"
-          },
-          "timeLimit": {
-            "type": "number"
-          },
-          "Answer": {
-            "type": "object",
-            "properties": {
-              "form": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": { "type": "string" },
-                    "title": { "type": "string" },
-                    "input": { "type": "string" }
+        
+            "answers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "required": true
+                  },
+                  "value": {
+                    "type": "string",
+                    "required": true
+                  },
+                  "selected": {
+                    "type": "boolean",
+                    "required": true
+                  },
+                  "title": {
+                    "type": "string",
+                    "required": true
+                  },
+                  "startValue": {
+                    "type": "integer",
+                    "required": false
+                  },
+                  "endValue": {
+                    "type": "integer",
+                    "required": false
+                  },
+                  "file": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "filename": {
+                          "type": "string",
+                          "required": true
+                        },
+                        "url": {
+                          "type": "string",
+                          "required": false
+                        },
+                        "type": {
+                          "type": "string",
+                          "required": false
+                        },
+                        "source": {
+                          "type": "string",
+                          "required": false
+                        },
+                        "name": {
+                          "type": "string",
+                          "required": false
+                        },
+                        "size": {
+                          "type": "string",
+                          "required": false
+                        }
+                      },
+                      "required": ["filename"]
+                    }
+                  }
+                },
+                "required": ["id", "value", "title", "selected"]
+              }
+            },
+            "form": [
+              {
+                "id": {
+                  "type": "string",
+                  "required": true
+                },
+                "title": {
+                  "type": "string",
+                  "required": true
+                },
+                "input": {
+                  "type": "string",
+                  "required": true
+                }
+              }
+            ],
+            "choices": [
+              {
+                "id": {
+                  "type": "string",
+                  "required": true
+                },
+                "title": {
+                  "type": "string",
+                  "required": true
+                },
+                "questionId": {
+                  "type": "string",
+                  "required": false
+                },
+                "selected": {
+                  "type": "boolean",
+                  "required": true
+                },
+                "file": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "filename": {
+                        "type": "string",
+                        "required": true
+                      },
+                      "url": {
+                        "type": "string",
+                        "required": false
+                      },
+                      "type": {
+                        "type": "string",
+                        "required": false
+                      },
+                      "source": {
+                        "type": "string",
+                        "required": false
+                      },
+                      "name": {
+                        "type": "string",
+                        "required": false
+                      },
+                      "size": {
+                        "type": "string",
+                        "required": false
+                      }
+                    },
+                    "required": ["filename"]
                   }
                 }
-              },
-              "choices": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": { "type": "string" },
-                    "title": { "type": "string" },
-                    "questionId": { "type": "string" },
-                    "selected": { "type": "boolean" }
-                  }
+              }
+            ],
+            "files": [
+              {
+                "id": {
+                  "type": "string",
+                  "required": true
+                },
+                "url": {
+                  "type": "string",
+                  "required": false
+                },
+                "type": {
+                  "type": "string",
+                  "required": false
+                },
+                "source": {
+                  "type": "string",
+                  "required": false
+                },
+                "name": {
+                  "type": "string",
+                  "required": false
+                },
+                "size": {
+                  "type": "string",
+                  "required": false
                 }
+              }
+            ],
+            "Text": [
+              {
+                "id": {
+                  "type": "string",
+                  "required": false
+                },
+                "value": {
+                  "type": "string",
+                  "required": false
+                }
+              }
+            ],
+            "rating": {
+              "value": {
+                "type": "number",
+                "required": false
               },
-              "files": {
-                "type": "array",
-                "items": { "type": "object", "properties": { "id": { "type": "string" } } }
-              },
-              "textInput": { "type": "string" },
-              "timeOnScreen": { "type": "number" },
-              "hasRule": { "type": "boolean" },
-              "responded": { "type": "boolean" }
+              "max": {
+                "type": "number",
+                "required": false
+              }
             }
-          }
-        }
-      },
-      "EditAnswer": {
-        "type": "object",
-        "properties": {
-          "Answer": {
-            "$ref": "#/components/schemas/CreateResponse/properties/Answer"
-          },
-          "questionType": {
-            "type": "string"
           }
         }
       },
       "Response": {
         "type": "object",
         "properties": {
-          "_id": { "type": "string" },
-          "taskId": { "type": "string" },
-          "questionId": { "type": "string" },
-          "questionTitle": { "type": "string" },
-          "description": { "type": "string" },
-          "answerType": { "type": "string" },
-          "required": { "type": "boolean" },
+          "taskId": {
+            "type": "string"
+          },
+          "questionId": {
+            "type": "string"
+          },
           "userId": {
             "type": "string"
           },
-          "timeLimit": { "type": "number" },
-          "Answer": { "$ref": "#/components/schemas/CreateResponse/properties/Answer" }
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "selected": {
+                  "type": "boolean"
+                },
+                "file": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "filename": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreateBulkResponses": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CreateResponse"
+        }
+      },
+      "EditResponse": {
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "selected": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
         }
       }
     }
-  }
+
 }

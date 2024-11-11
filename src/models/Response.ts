@@ -1,12 +1,12 @@
 import { Schema, model } from "mongoose";
 
 const responseSchema = new Schema({
-  taskId: { type: Schema.Types.ObjectId, ref: "Task", required: true },
-  questionId: { type: Schema.Types.ObjectId, ref: "Question", required: true },
-  questionTitle: { type: String, required: true },
-  questionType: { type: String, required: true },  // new field to handle type
-  description: { type: String, required: true },
-  answerType: { type: String, required: true },
+  taskId: { type: Schema.Types.ObjectId, ref: "Task" },
+  questionId: { type: Schema.Types.ObjectId, ref: "Question",  },
+  questionTitle: { type: String,  },
+  questionType: { type: String,  },  // new field to handle type
+  description: { type: String,  },
+  answerType: { type: String,  },
   userId: { type: String, },
 
   required: { type: Boolean, },
@@ -23,7 +23,7 @@ const responseSchema = new Schema({
       {
         id: { type: String, required: true },
         title: { type: String, required: true },
-        questionId: { type: String, required: true },
+        questionId: { type: String, },
         selected: { type: Boolean, required: true },
       },
     ],
@@ -39,7 +39,13 @@ const responseSchema = new Schema({
 
       },
     ],
-    textInput: { type: String },
+    Text: [
+      {
+      id:{ type: String },
+      value:{ type: String }
+
+      }
+    ],
 
     rating: { 
       value: { type: Number }, 

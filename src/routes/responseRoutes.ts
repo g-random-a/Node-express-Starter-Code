@@ -1,28 +1,24 @@
 import { Router } from "express";
-import {
-  createResponse,
-  editAnswer,
-  getResponses,
-  deleteResponseByTaskAndQuestion,
-  getResponseByTaskAndQuestion,
+import { 
+  createResponse, 
+  createBulkResponses, 
+  getResponses, 
+  getResponsesByUserAndTask 
 } from "../controllers/responseController";
-import { upload } from "../middleware/multerConfig"; // Assuming you use multer for file uploads
+import { upload } from "../middleware/multerConfig";
 
 const router = Router();
 
-// Route to create a new response
-router.post("/responses", upload.array("files"), createResponse);
+// Route to create a single response
+router.post("/responses", upload.none(), createResponse);
 
-// Route to edit an existing answer
-router.put("/responses/:taskId/:questionId", upload.array("files"), editAnswer);
+// Route to create bulk responses
+router.post("/responses/bulk", upload.array("files"), createBulkResponses);
 
 // Route to get all responses
 router.get("/responses", getResponses);
 
-// Route to delete a response
-router.delete("/responses/:taskId/:questionId", deleteResponseByTaskAndQuestion);
-
-// Route to fetch a specific response by taskId and questionId
-router.get("/responses/:taskId/:questionId", getResponseByTaskAndQuestion);
+// Route to get responses by userId and taskId
+router.get("/responses/:userId/:taskId", getResponsesByUserAndTask);
 
 export default router;
