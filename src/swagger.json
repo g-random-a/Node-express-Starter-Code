@@ -11,7 +11,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5000/api",
+      "url": "http://54.162.136.11/api/v1/response",
       "description": "Development server"
     }
   ],
