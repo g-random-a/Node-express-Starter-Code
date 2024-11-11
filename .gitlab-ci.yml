@@ -46,7 +46,7 @@ deploy-to-ec2:
   script:
     # SSH into EC2, pull the latest image from Docker Hub, and run it
     - ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} "
-      docker rm -f question-response-service || true && docker pull ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} && docker run -d -p 5005:${PORT} --name question-response-service -e PORT=${PORT} -e MONGO_DB_URI=${MONGO_DB_URI} ${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
+      docker rm -f question-response-service || true && docker pull ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} && docker run -d -p 5005:${PORT} --name question-response-service -e PORT=${PORT} -e MONGO_DB_URI='${MONGO_DB_URI}' ${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
   tags:
     - kifiya_docker_runner01
   rules:
