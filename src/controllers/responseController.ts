@@ -10,10 +10,10 @@ const schema = Joi.object({
     "string.empty": `"userId" cannot be an empty field`,
     "any.required": `"userId" is a required field`,
   }),
-  questionId: Joi.string().required().messages({
-    "string.base": `"questionId" should be a type of 'text'`,
-    "string.empty": `"questionId" cannot be an empty field`,
-    "any.required": `"questionId" is a required field`,
+  taskId: Joi.string().required().messages({
+    "string.base": `"taskId" should be a type of 'text'`,
+    "string.empty": `"taskId" cannot be an empty field`,
+    "any.required": `"taskId" is a required field`,
   }),
 });
 
@@ -109,6 +109,12 @@ export const createBulkResponses = async (req: Request, res: Response): Promise<
             title: answer.title,
             selected: answer.selected,
           }));
+          break;
+        case "RATING":
+          formattedAnswers.Text = answers.map((answer: any) => ({
+              id: answer.id,
+              value: answer.value,
+            }));
           break;
 
         case "RANGE":
