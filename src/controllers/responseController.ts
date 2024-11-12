@@ -259,9 +259,7 @@ export const getResponsesByUserAndTask = async (req: Request, res: Response): Pr
     const { userId, taskId } = req.params;
     const responses = await ResponseModel.find({ userId, taskId });
 
-    if (!responses.length) {
-      return sendErrorResponse(res, 404, "No responses found for the specified userId and taskId");
-    }
+    
 
     res.status(200).json(responses);
   } catch (error: any) {
