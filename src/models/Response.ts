@@ -1,8 +1,9 @@
+import { string } from "joi";
 import { Schema, model } from "mongoose";
 
 const responseSchema = new Schema({
-  taskId: { type: Schema.Types.ObjectId, ref: "Task" },
-  questionId: { type: Schema.Types.ObjectId, ref: "Question",  },
+  taskId: {  type: String, },
+  questionId: {  type: String,   },
   questionTitle: { type: String,  },
   questionType: { type: String,  },  // new field to handle type
   description: { type: String,  },
@@ -14,9 +15,9 @@ const responseSchema = new Schema({
   Answer: {
     form: [
       {
-        id: { type: Schema.Types.ObjectId, required: true },
-        title: { type: String, required: true },
-        input: { type: String, required: true },
+        id: { type: String },
+        title: { type: String, },
+        input: { type: String, },
       },
     ],
     choices: [

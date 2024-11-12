@@ -24,6 +24,11 @@ const singleResponseSchema = Joi.object({
     "string.empty": `"userId" cannot be an empty field`,
     "any.required": `"userId" is a required field`,
   }),
+  taskId: Joi.string().required().messages({
+    "string.base": `"taskId" should be a type of 'text'`,
+    "string.empty": `"taskId" cannot be an empty field`,
+    "any.required": `"taskId" is a required field`,
+  }),
   questionId: Joi.string().required().messages({
     "string.base": `"questionId" should be a type of 'text'`,
     "string.empty": `"questionId" cannot be an empty field`,
@@ -50,6 +55,7 @@ const sendErrorResponse = (res: Response, statusCode: number, message: string) =
 // Validation schema for bulk responses
 const bulkResponseSchema = Joi.array().items(singleResponseSchema);
 
+
 export const createBulkResponses = async (req: Request, res: Response): Promise<void> => {
   try {
     const responses = req.body;
@@ -57,14 +63,19 @@ export const createBulkResponses = async (req: Request, res: Response): Promise<
     // Validate bulk payload
     const { error } = bulkResponseSchema.validate(responses);
     if (error) {
-      return sendErrorResponse(res, 400, error.details[0].message);
-    }
+      sendErrorResponse(res, 400, error.details[0].message);    }
 
-    // Process each response item
+    // Format and save each response
     const formattedResponses = responses.map((response: any) => {
-      const { userId, questionId, questionType, answers } = response;
+      const { userId, taskId, questionId, questionType, answers } = response;
 
-      let formattedAnswers;
+      const formattedAnswers = {
+        form: [],
+        choices: [],
+        files: [],
+        Text: [],
+        rating: null,
+      };
 
       switch (questionType) {
         case "TEXT":
@@ -75,8 +86,7 @@ export const createBulkResponses = async (req: Request, res: Response): Promise<
         case "COLORPICKER":
         case "SLIDER":
         case "LOCATION":
-        case "RATING":
-          formattedAnswers = answers.map((answer: any) => ({
+          formattedAnswers.Text = answers.map((answer: any) => ({
             id: answer.id,
             value: answer.value,
           }));
@@ -86,16 +96,15 @@ export const createBulkResponses = async (req: Request, res: Response): Promise<
         case "CHECKBOX":
         case "DROPDOWN":
         case "RADIOBUTTON":
-          formattedAnswers = answers.map((answer: any) => ({
+          formattedAnswers.choices = answers.map((answer: any) => ({
             id: answer.id,
-            selected: answer.selected,
             title: answer.title,
-
+            selected: answer.selected,
           }));
           break;
 
         case "RANGE":
-          formattedAnswers = answers.map((answer: any) => ({
+          formattedAnswers.form = answers.map((answer: any) => ({
             id: answer.id,
             startValue: answer.startValue,
             endValue: answer.endValue,
@@ -108,37 +117,36 @@ export const createBulkResponses = async (req: Request, res: Response): Promise<
             throw new Error("No files uploaded");
           }
           const files = req.files as Express.Multer.File[];
-          formattedAnswers = answers.map((answer: any, index: number) => ({
-            id: answer.id,
-            file: files.map((file) => ({
-              filename: file.filename,
-              url: `/uploads/${file.filename}`,
-              type: file.mimetype,
-            })),
-          }));
+          // formattedAnswers.files = files.map((file) => ({
+          //   id: answer.id,
+          //   url: `/uploads/${file.filename}`,
+          //   type: file.mimetype,
+          //   name: file.originalname,
+          //   size: file.size,
+          // }));
           break;
 
         default:
-          throw new Error("Unsupported question type");
+          throw new Error(`Unsupported question type: ${questionType}`);
       }
 
       return {
         userId,
+        taskId,
         questionId,
         questionType,
-        answers: formattedAnswers,
+        Answer: formattedAnswers,
       };
     });
 
     // Save all responses to the database
     const savedResponses = await ResponseModel.insertMany(formattedResponses);
-    res.status(201).json({ message: "Muliple responses saved successfully", savedResponses });
+    res.status(201).json({ message: "Multiple responses saved successfully", savedResponses });
   } catch (error: any) {
-    console.error(error);
-    sendErrorResponse(res, 500, "Internal server error");
+    console.error("Error saving responses:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
-
 // Create a new response
 export const createResponse = async (req: Request, res: Response): Promise<void> => {
   try {
