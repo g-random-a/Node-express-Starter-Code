@@ -3,7 +3,8 @@ import {
   createResponse, 
   createBulkResponses, 
   getResponses, 
-  getResponsesByUserAndTask 
+  getResponsesByUserAndTask ,
+  deleteAllRecords
 } from "../controllers/responseController";
 import { upload } from "../middleware/multerConfig";
 
@@ -11,6 +12,9 @@ const router = Router();
 
 // Route to create a single response
 router.post("/responses", upload.none(), createResponse);
+
+router.delete('/delete', deleteAllRecords);
+
 
 // Route to create bulk responses
 router.post("/responses/bulk", upload.array("files"), createBulkResponses);
