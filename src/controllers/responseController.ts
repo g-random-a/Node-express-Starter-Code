@@ -17,7 +17,6 @@ const schema = Joi.object({
   }),
 });
 
-
 const singleResponseSchema = Joi.object({
   userId: Joi.string().required().messages({
     "string.base": `"userId" should be a type of 'text'`,
@@ -54,21 +53,30 @@ const sendErrorResponse = (res: Response, statusCode: number, message: string) =
 
 // Validation schema for bulk responses
 const bulkResponseSchema = Joi.array().items(singleResponseSchema);
-
+const constructFileUrl = (req: Request, filename: string): string => {
+  const protocol = req.protocol;
+  const host = req.get('host');
+  return `${protocol}://${host}/uploads/${filename}`;
+};
 
 export const createBulkResponses = async (req: Request, res: Response): Promise<void> => {
   try {
-    const responses = req.body;
+    const responses = JSON.parse(req.body.questionData);
+    console.log("Parsed questionData:", responses);
 
-    // Validate bulk payload
     const { error } = bulkResponseSchema.validate(responses);
     if (error) {
-      sendErrorResponse(res, 400, error.details[0].message);    }
+      return sendErrorResponse(res, 400, error.details[0].message);
+    }
 
-    // Format and save each response
+    const files = req.files as Express.Multer.File[];
+    const fileMap = files.reduce((acc, file) => {
+      acc[file.originalname] = constructFileUrl(req, file.filename);
+      return acc;
+    }, {} as Record<string, string>);
+
     const formattedResponses = responses.map((response: any) => {
       const { userId, taskId, questionId, questionType, answers } = response;
-
       const formattedAnswers = {
         form: [],
         choices: [],
@@ -113,40 +121,30 @@ export const createBulkResponses = async (req: Request, res: Response): Promise<
 
         case "FILE":
         case "Media":
-          if (!req.files || !(req.files as Express.Multer.File[]).length) {
-            throw new Error("No files uploaded");
-          }
-          const files = req.files as Express.Multer.File[];
-          // formattedAnswers.files = files.map((file) => ({
-          //   id: answer.id,
-          //   url: `/uploads/${file.filename}`,
-          //   type: file.mimetype,
-          //   name: file.originalname,
-          //   size: file.size,
-          // }));
+          formattedAnswers.files = answers.map((answer: any) => ({
+            id: answer.id,
+            url: fileMap[answer.fileName] || "",
+            type: answer.type,
+            name: answer.fileName,
+            size: answer.size,
+          }));
           break;
 
         default:
           throw new Error(`Unsupported question type: ${questionType}`);
       }
 
-      return {
-        userId,
-        taskId,
-        questionId,
-        questionType,
-        Answer: formattedAnswers,
-      };
+      return { userId, taskId, questionId, questionType, Answer: formattedAnswers };
     });
 
-    // Save all responses to the database
     const savedResponses = await ResponseModel.insertMany(formattedResponses);
     res.status(201).json({ message: "Multiple responses saved successfully", savedResponses });
   } catch (error: any) {
     console.error("Error saving responses:", error);
-    res.status(500).json({ message: "Internal server error" });
+    sendErrorResponse(res, 500, "Internal server error");
   }
 };
+
 // Create a new response
 export const createResponse = async (req: Request, res: Response): Promise<void> => {
   try {
