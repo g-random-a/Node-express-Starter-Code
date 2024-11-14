@@ -4,7 +4,7 @@ import path from 'path';
 // Define storage options for Multer
 export const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Specify the folder for storing files
+    cb(null, path.join(__dirname, "../uploads")); // Save files in "uploads"
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -17,7 +17,7 @@ const fileTypes = /jpeg|jpg|png|gif|bmp|tiff|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|
 const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = fileTypes.test(file.mimetype);
 
-  if (extname && mimetype) {
+  if (fileTypes && mimetype) {
     cb(null, true);
   } else {
     cb(new Error('Only images and PDFs are allowed'));

@@ -49,19 +49,26 @@ const sendErrorResponse = (res: Response, statusCode: number, message: string) =
   res.status(statusCode).json({ message });
 };
 
+export const deleteAllRecords = async (req: Request, res: Response): Promise<void> => {
+  try {
+    await ResponseModel.deleteMany({});
+    res.status(200).json({ message: 'All records deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
 
 
 // Validation schema for bulk responses
 const bulkResponseSchema = Joi.array().items(singleResponseSchema);
-const constructFileUrl = (req: Request, filename: string): string => {
-  const protocol = req.protocol;
-  const host = req.get('host');
-  return `${protocol}://${host}/uploads/${filename}`;
-};
+
 
 export const createBulkResponses = async (req: Request, res: Response): Promise<void> => {
   try {
     const responses = JSON.parse(req.body.questionData);
+   
+
+
     console.log("Parsed questionData:", responses);
 
     const { error } = bulkResponseSchema.validate(responses);
@@ -70,10 +77,9 @@ export const createBulkResponses = async (req: Request, res: Response): Promise<
     }
 
     const files = req.files as Express.Multer.File[];
-    const fileMap = files.reduce((acc, file) => {
-      acc[file.originalname] = constructFileUrl(req, file.filename);
-      return acc;
-    }, {} as Record<string, string>);
+    const fileUrls = files.map((file) => `${req.protocol}://${req.get("host")}/uploads/${file.filename}`);
+console.log(fileUrls);
+  
 
     const formattedResponses = responses.map((response: any) => {
       const { userId, taskId, questionId, questionType, answers } = response;
@@ -129,7 +135,7 @@ export const createBulkResponses = async (req: Request, res: Response): Promise<
         case "Media":
           formattedAnswers.files = answers.map((answer: any) => ({
             id: answer.id,
-            url: fileMap[answer.fileName] || "",
+            url: fileUrls,
             type: answer.type,
             name: answer.fileName,
             size: answer.size,
