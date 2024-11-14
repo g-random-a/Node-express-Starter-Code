@@ -13,15 +13,9 @@ export const storage = multer.diskStorage({
 
 // File filter to ensure only files with specific extensions are accepted
 const fileFilter = (req: any, file: any, cb: any) => {
-const fileTypes = /jpeg|jpg|png|gif|bmp|tiff|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv|zip|rar|json|xml/i; // Adjust the types as needed  
-const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = fileTypes.test(file.mimetype);
 
-  if (fileTypes && mimetype) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only images and PDFs are allowed'));
-  }
+cb(null, true);
+
 };
 
 // Initialize the Multer middleware
