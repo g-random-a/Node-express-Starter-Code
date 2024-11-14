@@ -8,6 +8,8 @@ RUN npm install
 
 COPY . .
 
+RUN mkdir -p /app/dist/uploads
+
 RUN npm run build
 
 EXPOSE 3000
