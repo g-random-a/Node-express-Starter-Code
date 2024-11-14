@@ -133,9 +133,9 @@ console.log(fileUrls);
 
         case "FILE":
         case "Media":
-          formattedAnswers.files = answers.map((answer: any) => ({
+          formattedAnswers.files = answers.map((answer: any, index: number) => ({
             id: answer.id,
-            url: fileUrls,
+            url: fileUrls[index] || "", 
             type: answer.type,
             name: answer.fileName,
             size: answer.size,
