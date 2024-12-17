@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Response as ResponseModel } from "../models/Response";
 import Joi from "joi";
 import { upload } from "../middleware/multerConfig"; // Assuming Multer config is in middlewares
+import { uploadFileToS3 } from "../utils/awsS3/s3ClientHelpers";
 
 // Define validation schema using Joi
 const schema = Joi.object({
@@ -77,8 +78,21 @@ export const createBulkResponses = async (req: Request, res: Response): Promise<
     }
 
     const files = req.files as Express.Multer.File[];
-    const fileUrls = files.map((file) => `${req.protocol}://${req.get("host")}/uploads/${file.filename}`);
-console.log(fileUrls);
+    
+    const s3UploadPromises = files.map(async (file) => {
+      const fileBuffer = file.buffer;
+      const fileName = file.originalname;
+      const taskId = req.body.taskId;
+      const userId = req.body.userId;
+      const questionId = "fileUpload"; // Generic identifier for file uploads
+      const inputId = Date.now().toString();
+
+      // Upload file to S3 and return the file URL
+      const result = await uploadFileToS3(fileBuffer, fileName, taskId, userId, questionId, inputId);
+      return result.filePath;
+    });
+
+    const fileUrls = await Promise.all(s3UploadPromises);
   
 
     const formattedResponses = responses.map((response: any) => {

@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
+import { config } from './configs';
 
 const connectDB = async () => {
-    const  xx="mongodb+srv://ywubie:x3Om4Qyeb9ZyeHWP@cluster0.rlifx.mongodb.net/platformX"
     try {
-        const dbURI = xx|| '';
-        await mongoose.connect(dbURI, );
+        const dbURI = config.mongoDbUrl;
+        await mongoose.connect(dbURI);
         console.log('Connected to MongoDB');
     } catch (error) {
         console.error('Database connection error:', error);
