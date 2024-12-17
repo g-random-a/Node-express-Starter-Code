@@ -6,9 +6,26 @@ import path from "path";
 import { connectDB } from "./utils/db";
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './swagger.json';
+import { connectRabbitMQ } from "./utils/rabbitmq";
+import { consumeMessages } from "./utils/rabbitmq/subscriber";
 
 const app = express();
-connectDB();
+
+const startApp = async () => {
+    try {
+      connectDB();
+  
+      await connectRabbitMQ();
+      consumeMessages();
+  
+      console.log("RabbitMQ connected and consumer started.");
+    } catch (error) {
+      console.error("Failed to initialize application:", error);
+      process.exit(1);
+    }
+  };
+  
+startApp();
 
 // Use CORS middleware
 app.use(cors()); // Enable All CORS Requests
