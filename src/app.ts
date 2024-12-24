@@ -1,43 +1,45 @@
-import express from "express";
-import cors from "cors"; // Import cors
-import responseRoutes from "./routes/responseRoutes";
-import path from "path";
+import express from 'express';
+import cors from 'cors';
 
-import { connectDB } from "./utils/db";
 import swaggerUi from 'swagger-ui-express';
-import swaggerDocument from './swagger.json';
-import { connectRabbitMQ } from "./utils/rabbitmq";
-import { consumeMessages } from "./utils/rabbitmq/subscriber";
+import swaggerDocument from '../contrib/swagger/swagger.json';
+import InitApp from './startups/initApp';
+import helmet from 'helmet';
+import requestLoggerMiddleware from './middleware/requestLogger';
 
 const app = express();
 
-const startApp = async () => {
-    try {
-      connectDB();
-  
-      await connectRabbitMQ();
-      consumeMessages();
-  
-      console.log("RabbitMQ connected and consumer started.");
-    } catch (error) {
-      console.error("Failed to initialize application:", error);
-      process.exit(1);
-    }
-  };
-  
-startApp();
-
-// Use CORS middleware
-app.use(cors()); // Enable All CORS Requests
-
+app.use(cors());
+app.use(helmet());
 app.use(express.json());
-// setupSwagger(app); // Setup Swagger documentation
-const uploadsDir = path.join(__dirname, "uploads");
+app.use(requestLoggerMiddleware);
 
-app.use('/api/v1/response/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-app.use("/api/v1/response/uploads", express.static(uploadsDir));
+interface Route {
+  path: string;
+  handler: express.Router;
+}
+const routes: Route[] = [];
 
-app.use("/api/v1/response", responseRoutes);
+const registerRoute = (path: string, handler: express.Router) => {
+  routes.push({ path, handler });
+  app.use(path, handler);
+};
 
+const swaggerRouter = express.Router();
+swaggerRouter.use(swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-export default app;
+const configureApp = async (): Promise<void> => {
+  await InitApp();
+
+  registerRoute('/api/v1/response/api-docs', swaggerRouter);
+
+  console.log('\n📄 API Routes:');
+  console.table(
+    routes.map((route) => ({
+      Path: route.path,
+      Handler: route.handler.stack?.[0]?.name || 'anonymous',
+    })),
+  );
+};
+
+export { app, configureApp };

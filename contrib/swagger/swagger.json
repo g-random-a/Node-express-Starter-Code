@@ -1,0 +1,28 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Swagger test",
+    "version": "1.0.0",
+    "description": "API doc",
+    "contact": {
+      "name": "Habib Gemmechu",
+      "email": "habib.gemmech@gmail.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://dev.test.com",
+      "description": "Development server"
+    },
+    {
+      "url": "http://qa.test.com",
+      "description": "QA server"
+    },
+    {
+      "url": "http://prod.test.com",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+  }
+}
